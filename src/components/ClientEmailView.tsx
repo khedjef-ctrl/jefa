@@ -33,7 +33,7 @@ export const ClientEmailView: React.FC<ClientEmailViewProps> = ({
   const [copied, setCopied] = useState(false);
 
   const MANDATORY_DISCLAIMER =
-    "This comparison is for informational purposes only. Coverage is subject to the actual policy wording. Please confirm all details with your agent.";
+    "PolicyLens provides informational comparisons only. Not legal or coverage advice. Verify all details with the carrier.";
 
   const handleCopyEmail = () => {
     const fullEmail = `Subject: ${subject}\n\n${body}`;

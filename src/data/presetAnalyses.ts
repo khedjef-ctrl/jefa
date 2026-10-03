@@ -330,7 +330,7 @@ OUR RECOMMENDATION:
 Option 1: Liberty Mutual for complete turnkey coverage that meets general contractor requirements and provides umbrella protection.
 Option 2: Travelers, subject to negotiating down the $10,000 water deductible and adding a separate umbrella policy.
 
-This comparison is for informational purposes only. Coverage is subject to the actual policy wording. Please confirm all details with your agent.`,
+PolicyLens provides informational comparisons only. Not legal or coverage advice. Verify all details with the carrier.`,
   },
   agent_recommendation: {
     best_overall_value: 'Liberty Mutual Commercial Lines',
@@ -615,7 +615,7 @@ KEY FINDINGS:
 OUR RECOMMENDATION:
 Chubb is by far the safest carrier for your operation. Binding AmTrust or CNA would leave your business severely exposed.
 
-This comparison is for informational purposes only. Coverage is subject to the actual policy wording. Please confirm all details with your agent.`,
+PolicyLens provides informational comparisons only. Not legal or coverage advice. Verify all details with the carrier.`,
   },
   agent_recommendation: {
     best_overall_value: 'Chubb Custom Insurance',
@@ -845,7 +845,7 @@ We recommend Hiscox ($9,600). It includes Full Prior Acts coverage, $2,000,000 i
 
 The Hanover ($12,400) is also solid with $3M limits, but carries a high $10,000 deductible and a 50/50 settlement hammer clause.
 
-This comparison is for informational purposes only. Coverage is subject to the actual policy wording. Please confirm all details with your agent.`,
+PolicyLens provides informational comparisons only. Not legal or coverage advice. Verify all details with the carrier.`,
   },
   agent_recommendation: {
     best_overall_value: 'Hiscox Insurance Company',

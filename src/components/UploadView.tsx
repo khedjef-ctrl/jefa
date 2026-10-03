@@ -13,12 +13,12 @@ import {
   Sliders, 
   FileText, 
   ShieldCheck, 
-  ArrowRight,
-  HelpCircle,
+  ArrowRight, 
   Clock,
-  Layers
+  Layers,
+  Lock
 } from 'lucide-react';
-import { QuoteInputItem, ClientContext } from '../types/insurance';
+import { QuoteInputItem, ClientContext, UserProfile } from '../types/insurance';
 import { PRESET_SCENARIOS } from '../data/presetScenarios';
 import { trackEvent } from '../utils/analytics';
 
@@ -36,6 +36,8 @@ interface UploadViewProps {
   analysisStep: number; // 0=idle, 1=uploading, 2=extracting, 3=comparing, 4=done
   onSelectPreset: (presetId: string) => void;
   selectedPresetId: string;
+  currentUser: UserProfile | null;
+  onOpenPricing: () => void;
 }
 
 export const UploadView: React.FC<UploadViewProps> = ({
@@ -52,6 +54,8 @@ export const UploadView: React.FC<UploadViewProps> = ({
   analysisStep,
   onSelectPreset,
   selectedPresetId,
+  currentUser,
+  onOpenPricing,
 }) => {
   const [dragOver, setDragOver] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
@@ -69,14 +73,14 @@ export const UploadView: React.FC<UploadViewProps> = ({
     trackEvent('upload_started', { count: files.length });
 
     if (quotes.length + files.length > 5) {
-      setFileError('QuoteCompare AI accepts a maximum of 5 commercial quote PDFs per comparison.');
+      setFileError('PolicyLens accepts a maximum of 5 commercial quote PDFs per comparison.');
       return;
     }
 
     const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20 MB
 
     Array.from(files).forEach((file) => {
-      // Validate PDF file type
+      // Validate PDF format
       if (!file.name.toLowerCase().endsWith('.pdf') && file.type !== 'application/pdf') {
         setFileError(`Invalid file format: "${file.name}". Please upload text-based .pdf quote files only.`);
         return;
@@ -92,6 +96,14 @@ export const UploadView: React.FC<UploadViewProps> = ({
       reader.readAsDataURL(file);
       reader.onload = () => {
         const base64Data = reader.result as string;
+
+        // Check for password protection marker (/Encrypt)
+        const sampleHeader = atob(base64Data.slice(28, 5000) || '');
+        if (sampleHeader.includes('/Encrypt')) {
+          setFileError(`File "${file.name}" is password-protected. Please upload an unprotected PDF quote.`);
+          return;
+        }
+
         const newQuote: QuoteInputItem = {
           id: 'quote-' + Date.now() + '-' + Math.random().toString(36).substring(2, 6),
           carrierName: file.name.replace(/\.[^/.]+$/, '').replace(/[_-]/g, ' '),
@@ -130,26 +142,29 @@ export const UploadView: React.FC<UploadViewProps> = ({
 
   return (
     <div className="space-y-10">
-      {/* 1. Landing Hero Section (Branding & Value Proposition) */}
+      {/* 1. Landing Hero Section (PolicyLens Branding & Tagline) */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1e3a5f] via-slate-900 to-slate-950 border border-slate-800 p-8 sm:p-12 shadow-2xl">
         <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
 
         <div className="max-w-3xl space-y-5">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold uppercase tracking-wider">
+          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs font-bold uppercase tracking-wider">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Commercial Insurance Comparative Engine</span>
+            <span>Commercial Insurance Comparative Analysis</span>
           </div>
 
+          {/* Requirement 4: Landing hero headline */}
           <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
-            QuoteCompare <span className="text-emerald-400">AI</span>
+            Compare commercial insurance quotes in 60 seconds
           </h1>
 
-          <p className="text-lg sm:text-xl text-slate-200 font-medium leading-relaxed">
+          {/* Requirement 3: Tagline */}
+          <p className="text-lg sm:text-xl text-emerald-400 font-bold">
             5 carrier quotes. 1 clear comparison. 60 seconds.
           </p>
 
-          <p className="text-sm text-slate-400 max-w-2xl leading-relaxed">
-            Built for US independent commercial insurance agents. Upload 2 to 5 quote PDFs to automatically extract coverage limits, expose dangerous exclusions, detect missing coverages, and produce client-ready proposals in seconds.
+          {/* Requirement 5: Sub-headline */}
+          <p className="text-sm sm:text-base text-slate-300 max-w-2xl leading-relaxed">
+            PolicyLens turns 5 carrier PDFs into one client-ready comparison. Built for US independent insurance agents.
           </p>
 
           {/* 3 Benefit Bullets */}
@@ -190,7 +205,7 @@ export const UploadView: React.FC<UploadViewProps> = ({
 
             {/* Quick 1-click Preset Selector */}
             <div className="flex items-center space-x-2 bg-slate-800/80 border border-slate-700 px-3 py-2 rounded-xl text-xs">
-              <span className="text-slate-400">Or try preset:</span>
+              <span className="text-slate-400">Sample Carrier Quotes:</span>
               <div className="flex space-x-1.5">
                 {PRESET_SCENARIOS.map((p) => (
                   <button
@@ -223,9 +238,11 @@ export const UploadView: React.FC<UploadViewProps> = ({
               Upload commercial quotes from Travelers, Hartford, Chubb, CNA, Liberty Mutual, etc.
             </p>
           </div>
-          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
-            {quotes.length} of 5 loaded
-          </span>
+          <div className="flex items-center space-x-2">
+            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
+              {quotes.length} of 5 loaded
+            </span>
+          </div>
         </div>
 
         {/* Error notification if file issue */}
@@ -305,7 +322,7 @@ export const UploadView: React.FC<UploadViewProps> = ({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {quotes.map((q, idx) => (
+              {quotes.map((q) => (
                 <div
                   key={q.id}
                   className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition flex items-start justify-between"
@@ -461,7 +478,7 @@ export const UploadView: React.FC<UploadViewProps> = ({
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                 </svg>
-                <span>Senior Analyst AI Processing...</span>
+                <span>PolicyLens AI Extracting & Comparing...</span>
               </span>
               <span className="text-emerald-400 font-semibold font-mono">
                 {stepLabels[analysisStep] || 'Processing...'}

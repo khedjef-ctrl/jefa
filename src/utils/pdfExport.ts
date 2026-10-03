@@ -10,26 +10,27 @@ declare global {
 
 /**
  * Generates and downloads a clean, branded multi-page PDF comparison report
- * using jsPDF & html2canvas or direct vector formatting.
+ * for PolicyLens using jsPDF & html2canvas or direct vector formatting.
  */
 export async function exportProposalToPdf(
   analysis: CommercialAnalysisOutput,
   clientName: string,
   agencyName: string,
-  clientContext?: ClientContext
+  clientContext?: ClientContext,
+  isWatermarked: boolean = false
 ): Promise<void> {
   const safeClientName = (clientName || analysis.carriers[0]?.named_insured || 'Commercial_Client')
     .replace(/[^a-zA-Z0-9_-]/g, '_');
   const dateStr = new Date().toISOString().split('T')[0];
-  const filename = `QuoteCompare_${safeClientName}_${dateStr}.pdf`;
+  const filename = `PolicyLens_${safeClientName}_${dateStr}.pdf`;
 
   trackEvent('pdf_exported', {
     client: clientName,
     quotesCount: analysis.carriers.length,
+    watermarked: isWatermarked,
     filename,
   });
 
-  // Check if jsPDF is available on window
   const jsPDF = window.jspdf?.jsPDF;
 
   if (!jsPDF) {
@@ -51,13 +52,13 @@ export async function exportProposalToPdf(
     const contentWidth = pageWidth - margin * 2;
     let y = margin;
 
-    // Helper: Draw page header/footer
+    // Helper: Draw page header/footer and optional watermark
     const drawHeaderFooter = (pageNumber: number, totalPages: number) => {
       // Header
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(8);
-      doc.setTextColor(30, 58, 95); // Navy blue
-      doc.text('QuoteCompare AI — Commercial Insurance Comparative Analysis', margin, 25);
+      doc.setTextColor(30, 58, 95); // Navy blue #1e3a5f
+      doc.text('PolicyLens — 5 carrier quotes. 1 clear comparison. 60 seconds.', margin, 25);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(140, 140, 140);
       doc.text(dateStr, pageWidth - margin, 25, { align: 'right' });
@@ -65,12 +66,25 @@ export async function exportProposalToPdf(
       doc.setLineWidth(0.75);
       doc.line(margin, 28, pageWidth - margin, 28);
 
+      // Watermark for Free plan users
+      if (isWatermarked) {
+        doc.saveGraphicsState();
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(36);
+        doc.setTextColor(200, 210, 225);
+        doc.text('PolicyLens Free Preview', pageWidth / 2, pageHeight / 2, {
+          align: 'center',
+          angle: 45,
+        });
+        doc.restoreGraphicsState();
+      }
+
       // Footer
       doc.line(margin, pageHeight - 32, pageWidth - margin, pageHeight - 32);
       doc.setFontSize(7);
       doc.setTextColor(100, 116, 139);
       doc.text(
-        'QuoteCompare AI provides informational comparisons only. Not legal or coverage advice. Verify all details with the carrier.',
+        'PolicyLens provides informational comparisons only. Not legal or coverage advice. Verify all details with the carrier.',
         margin,
         pageHeight - 20
       );
@@ -90,7 +104,7 @@ export async function exportProposalToPdf(
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(26);
-    doc.text('QuoteCompare AI', margin, 65);
+    doc.text('PolicyLens', margin, 65);
 
     doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
@@ -129,7 +143,7 @@ export async function exportProposalToPdf(
 
     doc.text(`Date Generated: ${new Date().toLocaleDateString('en-US', { dateStyle: 'long' })}`, margin + 280, y + 62);
     doc.text(`Carriers Evaluated: ${analysis.carriers.length} Carrier Quotes`, margin + 280, y + 78);
-    doc.text(`Status: Completed Underwriting Comparison`, margin + 280, y + 94);
+    doc.text(`Engine: PolicyLens Commercial Intelligence`, margin + 280, y + 94);
 
     y += 140;
 
@@ -255,9 +269,6 @@ export async function exportProposalToPdf(
       });
 
       y += 24;
-      if (y > pageHeight - 60) {
-        // avoid overflow
-      }
     });
 
     // Red Flags Section on Page 2
@@ -369,7 +380,7 @@ export async function exportProposalToPdf(
 
     drawHeaderFooter(3, 3);
 
-    // Save PDF
+    // Save PDF with PolicyLens filename
     doc.save(filename);
   } catch (err) {
     console.error('PDF generation error, falling back to print view:', err);

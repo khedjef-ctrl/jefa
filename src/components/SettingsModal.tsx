@@ -60,8 +60,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             <div className="grid grid-cols-3 gap-2">
               {[
                 { id: 'en', label: 'English (US)' },
-                { id: 'es', label: 'Español' },
-                { id: 'fr', label: 'Français' },
+                { id: 'ar', label: 'العربية (Arabic)' },
+                { id: 'fr', label: 'Français (French)' },
               ].map((lang) => (
                 <button
                   key={lang.id}

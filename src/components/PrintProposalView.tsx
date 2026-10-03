@@ -1,11 +1,12 @@
 import React from 'react';
-import { CommercialAnalysisOutput } from '../types/insurance';
+import { CommercialAnalysisOutput, UserProfile } from '../types/insurance';
 import { ShieldCheck, Printer, X } from 'lucide-react';
 
 interface PrintProposalViewProps {
   analysis: CommercialAnalysisOutput;
   clientName: string;
   agencyName: string;
+  currentUser?: UserProfile | null;
   onClose: () => void;
 }
 
@@ -13,6 +14,7 @@ export const PrintProposalView: React.FC<PrintProposalViewProps> = ({
   analysis,
   clientName,
   agencyName,
+  currentUser,
   onClose,
 }) => {
   const {
@@ -22,8 +24,9 @@ export const PrintProposalView: React.FC<PrintProposalViewProps> = ({
     missing_coverages,
     premium_analysis,
     agent_recommendation,
-    client_summary_email,
   } = analysis;
+
+  const isFreePlan = !currentUser || currentUser.plan === 'free';
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950 p-4 sm:p-8">
@@ -32,20 +35,20 @@ export const PrintProposalView: React.FC<PrintProposalViewProps> = ({
         <div className="flex items-center space-x-2">
           <Printer className="w-5 h-5 text-emerald-400" />
           <span className="text-sm font-bold text-white">
-            Client-Facing Comparative Insurance Proposal (Print / PDF Preview)
+            PolicyLens Proposal — Print & PDF Preview
           </span>
         </div>
         <div className="flex items-center space-x-2">
           <button
             onClick={() => window.print()}
-            className="px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition flex items-center"
+            className="px-4 py-2 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition flex items-center cursor-pointer"
           >
             <Printer className="w-3.5 h-3.5 mr-1.5" />
             <span>Print or Save as PDF</span>
           </button>
           <button
             onClick={onClose}
-            className="px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition"
+            className="px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer"
           >
             Exit Print View
           </button>
@@ -53,7 +56,16 @@ export const PrintProposalView: React.FC<PrintProposalViewProps> = ({
       </div>
 
       {/* Printable Document Paper Sheet */}
-      <div className="max-w-4xl mx-auto bg-white text-slate-900 p-8 sm:p-12 rounded-xl shadow-2xl print:shadow-none print:p-0 print:m-0 text-xs">
+      <div className="max-w-4xl mx-auto bg-white text-slate-900 p-8 sm:p-12 rounded-xl shadow-2xl print:shadow-none print:p-0 print:m-0 text-xs relative">
+        {/* Optional Watermark for Free plan */}
+        {isFreePlan && (
+          <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-10 select-none">
+            <span className="text-6xl font-black text-slate-900 transform -rotate-45 uppercase tracking-widest">
+              PolicyLens Free Preview
+            </span>
+          </div>
+        )}
+
         {/* Proposal Header */}
         <div className="border-b-2 border-slate-900 pb-6 mb-6 flex justify-between items-start">
           <div>
@@ -62,10 +74,10 @@ export const PrintProposalView: React.FC<PrintProposalViewProps> = ({
               <span>{agencyName || 'Independent Commercial Insurance Agency'}</span>
             </div>
             <h1 className="text-2xl font-black tracking-tight text-slate-950">
-              COMMERCIAL INSURANCE QUOTE COMPARISON
+              POLICY<span className="text-emerald-600">LENS</span> COMMERCIAL PROPOSAL
             </h1>
-            <p className="text-slate-600 mt-1">
-              Side-by-Side Coverage Analysis, Exclusion Review & Premium Evaluation
+            <p className="text-slate-600 mt-1 font-medium">
+              5 carrier quotes. 1 clear comparison. 60 seconds.
             </p>
           </div>
 
@@ -218,8 +230,8 @@ export const PrintProposalView: React.FC<PrintProposalViewProps> = ({
         </div>
 
         {/* Mandatory Rule 5 Disclaimer */}
-        <div className="mt-8 pt-4 border-t-2 border-slate-900 text-center text-[10px] text-slate-500 leading-relaxed font-semibold">
-          This comparison is for informational purposes only. Coverage is subject to the actual policy wording. Please confirm all details with your agent.
+        <div className="mt-8 pt-4 border-t-2 border-slate-900 text-center text-[10px] text-slate-600 leading-relaxed font-semibold">
+          PolicyLens provides informational comparisons only. Not legal or coverage advice. Verify all details with the carrier.
         </div>
       </div>
     </div>

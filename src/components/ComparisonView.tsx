@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   CommercialAnalysisOutput, 
   ClientContext, 
-  UnderwriterQuestion 
+  UserProfile 
 } from '../types/insurance';
 import { 
   Award, 
@@ -24,7 +24,8 @@ import {
   ShieldCheck, 
   Code,
   FileText,
-  AlertCircle
+  AlertCircle,
+  Sparkles
 } from 'lucide-react';
 import { PremiumChart } from './PremiumChart';
 import { exportProposalToPdf } from '../utils/pdfExport';
@@ -37,6 +38,8 @@ interface ComparisonViewProps {
   clientContext?: ClientContext;
   showRawJson: boolean;
   onPrintPreview: () => void;
+  currentUser: UserProfile | null;
+  onOpenPricing: () => void;
 }
 
 export const ComparisonView: React.FC<ComparisonViewProps> = ({
@@ -46,6 +49,8 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
   clientContext,
   showRawJson,
   onPrintPreview,
+  currentUser,
+  onOpenPricing,
 }) => {
   const {
     carriers,
@@ -66,6 +71,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
 
   // Identify cheapest carrier
   const cheapestCarrierName = agent_recommendation.cheapest_option;
+  const isFreePlan = !currentUser || currentUser.plan === 'free';
 
   const handleCopyEmail = () => {
     const text = `Subject: ${client_summary_email.subject}\n\n${client_summary_email.body}`;
@@ -103,7 +109,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
   const handleDownloadPdf = async () => {
     setIsExportingPdf(true);
     try {
-      await exportProposalToPdf(analysis, clientName, agencyName, clientContext);
+      await exportProposalToPdf(analysis, clientName, agencyName, clientContext, isFreePlan);
     } finally {
       setIsExportingPdf(false);
     }
@@ -111,13 +117,31 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
 
   return (
     <div className="space-y-8">
+      {/* Top Notice if Free Plan Watermark */}
+      {isFreePlan && (
+        <div className="p-3.5 rounded-2xl bg-slate-900 border border-amber-500/30 text-xs flex flex-col sm:flex-row items-center justify-between gap-3 text-slate-300">
+          <div className="flex items-center space-x-2">
+            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 uppercase">
+              Free Plan
+            </span>
+            <span>PDF export includes PolicyLens watermark. Upgrade to Solo Agent for watermark-free client proposals.</span>
+          </div>
+          <button
+            onClick={onOpenPricing}
+            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition shrink-0 cursor-pointer"
+          >
+            Upgrade Plan
+          </button>
+        </div>
+      )}
+
       {/* Action Bar (Download PDF, Print, Copy JSON) */}
       <div className="p-4 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
         <div>
           <div className="flex items-center space-x-2">
             <ShieldCheck className="w-5 h-5 text-emerald-400" />
             <h2 className="text-base font-extrabold text-white">
-              Executive Comparative Analysis Report
+              PolicyLens Comparative Proposal
             </h2>
             <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
               {carriers.length} Quotes Analyzed
@@ -129,7 +153,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {/* Download PDF Report Button (Requirement #3) */}
+          {/* Download PDF Report Button */}
           <button
             onClick={handleDownloadPdf}
             disabled={isExportingPdf}
@@ -184,7 +208,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
       <div className="p-6 rounded-3xl bg-gradient-to-br from-[#1e3a5f] via-slate-900 to-slate-950 border border-blue-500/30 shadow-2xl relative overflow-hidden">
         <div className="flex items-center space-x-2 text-xs font-bold text-emerald-400 uppercase tracking-wider mb-2">
           <Award className="w-4 h-4" />
-          <span>Independent Agent Decision Framework</span>
+          <span>PolicyLens Agent Decision Framework</span>
         </div>
 
         <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight mb-4">
@@ -407,7 +431,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
             </h3>
           </div>
           <span className="text-xs text-slate-400">
-            Always cites carrier name & page reference
+            Cites carrier name & page reference
           </span>
         </div>
 
@@ -646,7 +670,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
 
         {/* Rule 5 Mandatory Disclaimer Note */}
         <p className="text-[11px] text-slate-500 italic">
-          * Concludes with the mandated Rule 5 informational disclaimer protecting the agency.
+          * Concludes with the mandated Rule 5 informational disclaimer: "PolicyLens provides informational comparisons only. Not legal or coverage advice. Verify all details with the carrier."
         </p>
       </div>
 
@@ -660,7 +684,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
             </h3>
             <button
               onClick={handleCopyJson}
-              className="text-xs text-blue-400 hover:text-blue-300 font-semibold"
+              className="text-xs text-blue-400 hover:text-blue-300 font-semibold cursor-pointer"
             >
               {copiedJson ? 'Copied' : 'Copy JSON'}
             </button>

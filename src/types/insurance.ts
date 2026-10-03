@@ -1,3 +1,35 @@
+export type SubscriptionPlanId = 'free' | 'solo' | 'agency' | 'enterprise';
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  name?: string;
+  agencyName?: string;
+  plan: SubscriptionPlanId;
+  analyses_used: number;
+  analyses_limit: number; // 3 for free, 20 for solo, -1 for unlimited
+  trial_ends_at: string | null;
+  subscription_status: 'active' | 'trialing' | 'past_due' | 'canceled' | 'none';
+  stripe_customer_id?: string;
+  stripe_subscription_id?: string;
+  role: 'user' | 'admin';
+  created_at: string;
+  token?: string;
+}
+
+export interface PlanPricingTier {
+  id: SubscriptionPlanId;
+  name: string;
+  monthlyPrice: number;
+  yearlyPrice: number; // 20% discount
+  analysesLimitLabel: string;
+  analysesLimitNumber: number;
+  watermark: boolean;
+  features: string[];
+  cta: string;
+  highlighted?: boolean;
+}
+
 export interface ClientContext {
   businessType: string;
   state: string;
@@ -16,6 +48,7 @@ export interface HistoryItem {
   clientContext: ClientContext;
   analysis: CommercialAnalysisOutput;
   quotes: QuoteInputItem[];
+  userId?: string;
 }
 
 export interface AppSettings {
@@ -141,4 +174,41 @@ export interface QuotePresetScenario {
   description: string;
   quotes: QuoteInputItem[];
   precalculatedAnalysis?: CommercialAnalysisOutput;
+}
+
+export interface RateLimitStatus {
+  hourlyAnalysesRemaining: number;
+  dailyUploadsRemaining: number;
+  hourlyResetTime: string;
+  dailyResetTime: string;
+}
+
+export interface AdminAnalyticsData {
+  totalUsers: number;
+  activeSubscriptions: number;
+  mrr: number;
+  churnRate: number;
+  recentSignups: Array<{
+    id: string;
+    email: string;
+    plan: SubscriptionPlanId;
+    created_at: string;
+    status: string;
+  }>;
+  recentAnalyses: Array<{
+    id: string;
+    user_id: string;
+    user_email: string;
+    timestamp: string;
+    carriers_count: number;
+    carriers: string[];
+    token_count?: number;
+  }>;
+  errorLogs: Array<{
+    id: string;
+    timestamp: string;
+    type: string;
+    message: string;
+    user_email?: string;
+  }>;
 }

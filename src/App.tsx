@@ -3,8 +3,13 @@ import { Navbar } from './components/Navbar';
 import { UploadView } from './components/UploadView';
 import { ComparisonView } from './components/ComparisonView';
 import { HistoryView } from './components/HistoryView';
+import { PricingView } from './components/PricingView';
+import { SuccessView } from './components/SuccessView';
+import { CancelView } from './components/CancelView';
+import { AdminDashboard } from './components/AdminDashboard';
 import { SettingsModal } from './components/SettingsModal';
 import { LegalModal } from './components/LegalModal';
+import { AuthModal } from './components/AuthModal';
 import { PrintProposalView } from './components/PrintProposalView';
 import { PRESET_SCENARIOS } from './data/presetScenarios';
 import { PRESET_ANALYSES_MAP } from './data/presetAnalyses';
@@ -13,13 +18,15 @@ import {
   QuoteInputItem, 
   ClientContext, 
   HistoryItem, 
-  AppSettings 
+  AppSettings,
+  UserProfile,
+  SubscriptionPlanId
 } from './types/insurance';
 import { trackEvent } from './utils/analytics';
-import { AlertCircle, ShieldCheck } from 'lucide-react';
+import { AlertCircle, ShieldCheck, Zap, Lock, Sparkles } from 'lucide-react';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'upload' | 'comparison' | 'history'>('upload');
+  const [activeTab, setActiveTab] = useState<'upload' | 'comparison' | 'history' | 'pricing' | 'admin'>('upload');
   const [selectedPresetId, setSelectedPresetId] = useState<string>('contractor-hvac');
   
   // App Settings
@@ -39,9 +46,21 @@ export default function App() {
     };
   });
 
+  // User Profile & Authentication
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'signup'>('signup');
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+
+  // Settings & Legal Modals
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [legalModalType, setLegalModalType] = useState<'terms' | 'privacy' | null>(null);
   const [isPrintViewOpen, setIsPrintViewOpen] = useState(false);
+
+  // URL Query Parameters check for /success or /cancel
+  const [successSessionId, setSuccessSessionId] = useState<string | null>(null);
+  const [successPlanId, setSuccessPlanId] = useState<string>('solo');
+  const [isCancelView, setIsCancelView] = useState(false);
 
   // Client Details & Context
   const initialPreset = PRESET_SCENARIOS[0];
@@ -79,6 +98,42 @@ export default function App() {
     }
     return [];
   });
+
+  // Auto-authenticate on mount if token exists
+  useEffect(() => {
+    const token = localStorage.getItem('policylens_token');
+    if (token) {
+      fetch('/api/auth/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => (res.ok ? res.json() : Promise.reject('Invalid token')))
+        .then((data) => {
+          if (data.user) {
+            setCurrentUser(data.user);
+          }
+        })
+        .catch(() => {
+          localStorage.removeItem('policylens_token');
+        });
+    }
+
+    // Check URL parameters for Stripe redirect
+    const urlParams = new URLSearchParams(window.location.search);
+    const session = urlParams.get('session_id');
+    const plan = urlParams.get('plan') || 'solo';
+    if (session) {
+      setSuccessSessionId(session);
+      setSuccessPlanId(plan);
+      // clean url
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('policylens_token');
+    setCurrentUser(null);
+    setActiveTab('upload');
+  };
 
   // Save history to localStorage
   const saveAnalysisToHistory = (
@@ -142,16 +197,27 @@ export default function App() {
       return;
     }
 
+    // Check plan limits
+    if (currentUser && currentUser.analyses_limit !== -1 && currentUser.analyses_used >= currentUser.analyses_limit) {
+      setUpgradeModalOpen(true);
+      return;
+    }
+
     setIsAnalyzing(true);
     setAnalysisError(null);
     setRawErrorResponse(null);
     setAnalysisStep(1); // Uploading PDFs...
 
-    // Step 1: Uploading PDFs
-    await new Promise((resolve) => setTimeout(resolve, 600));
+    await new Promise((resolve) => setTimeout(resolve, 500));
     setAnalysisStep(2); // Extracting data...
 
     try {
+      const token = localStorage.getItem('policylens_token') || currentUser?.token;
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const payload = {
         quotes: quotes.map((q) => ({
           id: q.id,
@@ -168,9 +234,9 @@ export default function App() {
 
       setAnalysisStep(3); // Comparing quotes...
 
-      const response = await fetch('/api/analyze-quotes', {
+      const response = await fetch('/api/analyze', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify(payload),
       });
 
@@ -180,6 +246,11 @@ export default function App() {
         let errorMsg = `Server error (${response.status}): ${response.statusText}`;
         try {
           const parsed = JSON.parse(errorText);
+          if (parsed.code === 'PLAN_LIMIT_REACHED') {
+            setIsAnalyzing(false);
+            setUpgradeModalOpen(true);
+            return;
+          }
           if (parsed.error) errorMsg = parsed.error;
         } catch (e) {
           // not json
@@ -195,6 +266,14 @@ export default function App() {
 
       setAnalysisStep(4); // Done
       setAnalysis(result.data);
+
+      // Increment usage count locally
+      if (currentUser) {
+        setCurrentUser({
+          ...currentUser,
+          analyses_used: currentUser.analyses_used + 1,
+        });
+      }
 
       // Save to localStorage history
       saveAnalysisToHistory(result.data, clientName, clientContext, quotes);
@@ -215,6 +294,65 @@ export default function App() {
       setIsAnalyzing(false);
       setAnalysisStep(0);
       setAnalysisError(err.message || 'An unexpected error occurred during document extraction.');
+    }
+  };
+
+  // Stripe Checkout Selection
+  const handleSelectPlan = async (planId: SubscriptionPlanId, billingCycle: 'monthly' | 'yearly') => {
+    try {
+      const token = localStorage.getItem('policylens_token') || currentUser?.token;
+      const res = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token ? `Bearer ${token}` : '',
+        },
+        body: JSON.stringify({
+          planId,
+          billingCycle,
+          customerEmail: currentUser?.email,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to initialize checkout');
+
+      if (data.url) {
+        if (data.url.startsWith('/')) {
+          // Simulated development redirect
+          setSuccessSessionId(data.sessionId || 'cs_test');
+          setSuccessPlanId(planId);
+        } else {
+          // Live Stripe redirect
+          window.location.href = data.url;
+        }
+      }
+    } catch (err: any) {
+      alert(`Checkout initialization notice: ${err.message}`);
+    }
+  };
+
+  // Customer Portal Call
+  const handleManageSubscription = async () => {
+    try {
+      const token = localStorage.getItem('policylens_token') || currentUser?.token;
+      const res = await fetch('/api/create-portal-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: token ? `Bearer ${token}` : '',
+        },
+      });
+      const data = await res.json();
+      if (data.url) {
+        if (data.url.startsWith('/')) {
+          setActiveTab('pricing');
+        } else {
+          window.location.href = data.url;
+        }
+      }
+    } catch (e) {
+      setActiveTab('pricing');
     }
   };
 
@@ -247,7 +385,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-slate-950 pb-16">
-      {/* Top Navigation Bar with 3 Tabs */}
+      {/* Top Navigation Bar with PolicyLens Branding */}
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -255,6 +393,12 @@ export default function App() {
         onSelectPreset={handleSelectPreset}
         onOpenSettings={() => setIsSettingsOpen(true)}
         hasAnalysis={!!analysis}
+        currentUser={currentUser}
+        onOpenAuth={(mode) => {
+          setAuthModalMode(mode);
+          setAuthModalOpen(true);
+        }}
+        onLogout={handleLogout}
       />
 
       {/* Main Body Content */}
@@ -267,7 +411,7 @@ export default function App() {
                 <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
                 <div>
                   <h4 className="text-xs font-bold uppercase tracking-wider text-rose-300">
-                    Analysis Error Detected
+                    PolicyLens Processing Notice
                   </h4>
                   <p className="text-xs text-rose-100 mt-1 leading-relaxed">
                     {analysisError}
@@ -296,66 +440,114 @@ export default function App() {
               >
                 Retry Analysis
               </button>
-              {rawErrorResponse && (
-                <button
-                  onClick={() => alert(`Raw server response:\n\n${rawErrorResponse}`)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:text-white transition"
-                >
-                  Report Issue / View Raw Details
-                </button>
-              )}
+              <button
+                onClick={() => window.open('mailto:support@policylens.ai?subject=PolicyLens%20Issue%20Report')}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 text-slate-300 hover:text-white transition"
+              >
+                Report Issue
+              </button>
             </div>
           </div>
         )}
 
-        {/* TAB 1: UPLOAD TAB */}
-        {activeTab === 'upload' && (
-          <UploadView
-            quotes={quotes}
-            setQuotes={setQuotes}
-            clientName={clientName}
-            setClientName={setClientName}
-            agencyName={agencyName}
-            setAgencyName={setAgencyName}
-            clientContext={clientContext}
-            setClientContext={setClientContext}
-            onAnalyze={handleRunAnalysis}
-            isAnalyzing={isAnalyzing}
-            analysisStep={analysisStep}
-            onSelectPreset={handleSelectPreset}
-            selectedPresetId={selectedPresetId}
+        {/* View Routing */}
+        {successSessionId ? (
+          <SuccessView
+            planId={successPlanId}
+            sessionId={successSessionId}
+            onContinueToApp={() => {
+              setSuccessSessionId(null);
+              setActiveTab('upload');
+            }}
           />
-        )}
+        ) : isCancelView ? (
+          <CancelView
+            onReturnToPricing={() => {
+              setIsCancelView(false);
+              setActiveTab('pricing');
+            }}
+            onReturnToApp={() => {
+              setIsCancelView(false);
+              setActiveTab('upload');
+            }}
+          />
+        ) : (
+          <>
+            {/* TAB 1: UPLOAD TAB */}
+            {activeTab === 'upload' && (
+              <UploadView
+                quotes={quotes}
+                setQuotes={setQuotes}
+                clientName={clientName}
+                setClientName={setClientName}
+                agencyName={agencyName}
+                setAgencyName={setAgencyName}
+                clientContext={clientContext}
+                setClientContext={setClientContext}
+                onAnalyze={handleRunAnalysis}
+                isAnalyzing={isAnalyzing}
+                analysisStep={analysisStep}
+                onSelectPreset={handleSelectPreset}
+                selectedPresetId={selectedPresetId}
+                currentUser={currentUser}
+                onOpenPricing={() => setActiveTab('pricing')}
+              />
+            )}
 
-        {/* TAB 2: COMPARISON TAB */}
-        {activeTab === 'comparison' && analysis && (
-          <ComparisonView
-            analysis={analysis}
-            clientName={clientName}
-            agencyName={agencyName}
-            clientContext={clientContext}
-            showRawJson={settings.showRawJson}
-            onPrintPreview={() => setIsPrintViewOpen(true)}
-          />
-        )}
+            {/* TAB 2: COMPARISON TAB */}
+            {activeTab === 'comparison' && analysis && (
+              <ComparisonView
+                analysis={analysis}
+                clientName={clientName}
+                agencyName={agencyName}
+                clientContext={clientContext}
+                showRawJson={settings.showRawJson}
+                onPrintPreview={() => setIsPrintViewOpen(true)}
+                currentUser={currentUser}
+                onOpenPricing={() => setActiveTab('pricing')}
+              />
+            )}
 
-        {/* TAB 3: HISTORY TAB */}
-        {activeTab === 'history' && (
-          <HistoryView
-            history={history}
-            onViewItem={handleViewHistoryItem}
-            onRerunItem={handleRerunHistoryItem}
-            onDeleteItem={handleDeleteHistoryItem}
-            onClearAll={handleClearAllHistory}
-          />
+            {/* TAB 3: HISTORY TAB */}
+            {activeTab === 'history' && (
+              <HistoryView
+                history={history}
+                onViewItem={handleViewHistoryItem}
+                onRerunItem={handleRerunHistoryItem}
+                onDeleteItem={handleDeleteHistoryItem}
+                onClearAll={handleClearAllHistory}
+              />
+            )}
+
+            {/* TAB 4: PRICING TAB */}
+            {activeTab === 'pricing' && (
+              <PricingView
+                currentUser={currentUser}
+                onSelectPlan={handleSelectPlan}
+                onOpenAuth={(mode) => {
+                  setAuthModalMode(mode);
+                  setAuthModalOpen(true);
+                }}
+                onManageSubscription={handleManageSubscription}
+              />
+            )}
+
+            {/* TAB 5: ADMIN DASHBOARD TAB */}
+            {activeTab === 'admin' && (
+              <AdminDashboard
+                currentUser={currentUser}
+                onClose={() => setActiveTab('upload')}
+              />
+            )}
+          </>
         )}
       </main>
 
-      {/* Fixed Footer with Mandatory Disclaimer & Legal Links (Requirement #8) */}
+      {/* Fixed Footer with Mandatory Disclaimer & Legal Links (Requirement #11) */}
       <footer className="fixed bottom-0 inset-x-0 z-30 bg-[#1e3a5f]/95 backdrop-blur-md border-t border-slate-700/80 py-2.5 px-4 text-center text-[11px] text-slate-300 shadow-2xl">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1 sm:gap-4">
           <p className="font-medium text-slate-200">
-            QuoteCompare AI provides informational comparisons only. Not legal or coverage advice. Verify all details with the carrier.
+            PolicyLens provides informational comparisons only. Not legal or coverage advice. Verify all details with the carrier.
           </p>
           <div className="flex items-center space-x-3 text-slate-400 font-semibold">
             <button
@@ -375,7 +567,49 @@ export default function App() {
         </div>
       </footer>
 
-      {/* Settings Modal (Requirement #7) */}
+      {/* Upgrade / Quota Reached Modal */}
+      {upgradeModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md shadow-2xl p-6 sm:p-8 space-y-4 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto">
+              <Zap className="w-7 h-7" />
+            </div>
+            <h3 className="text-xl font-bold text-white">Monthly Comparison Limit Reached</h3>
+            <p className="text-xs text-slate-300 leading-relaxed">
+              You have utilized all comparisons allocated to your current plan. Upgrade to Solo Agent or Small Agency to unlock additional comparisons, watermark-free PDF exports, and priority processing.
+            </p>
+            <div className="pt-2 flex flex-col sm:flex-row gap-2">
+              <button
+                onClick={() => {
+                  setUpgradeModalOpen(false);
+                  setActiveTab('pricing');
+                }}
+                className="w-full py-2.5 rounded-xl font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition cursor-pointer text-xs"
+              >
+                View Plans & Upgrade
+              </button>
+              <button
+                onClick={() => setUpgradeModalOpen(false)}
+                className="w-full py-2.5 rounded-xl font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition text-xs cursor-pointer"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Authentication Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        initialMode={authModalMode}
+        onAuthSuccess={(user) => {
+          setCurrentUser(user);
+        }}
+      />
+
+      {/* Settings Modal */}
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
@@ -395,6 +629,7 @@ export default function App() {
           analysis={analysis}
           clientName={clientName}
           agencyName={agencyName}
+          currentUser={currentUser}
           onClose={() => setIsPrintViewOpen(false)}
         />
       )}
