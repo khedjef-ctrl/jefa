@@ -1,0 +1,6 @@
+{
+  "name": "Commercial Insurance Quote Comparison & Proposal Studio",
+  "description": "Professional commercial insurance comparative analysis platform for independent agents to evaluate multi-carrier quotes, identify red flags, coverage gaps, and generate client-ready proposals.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
