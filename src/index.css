@@ -1,14 +1,132 @@
 @import "tailwindcss";
 
+/* ==========================================================================
+   PolicyLens Responsive Mobile & Tablet Design System
+   Breakpoints:
+   - Mobile:  max-width: 640px
+   - Tablet:  641px - 1024px
+   - Desktop: 1025px+
+   ========================================================================== */
+
 :root {
   --navy-blue: #1e3a5f;
   --accent-green: #10b981;
+}
+
+/* 1. VIEWPORT & BASE STYLES */
+html {
+  font-size: 16px; /* Minimum 16px base font size for crisp mobile readability */
+  -webkit-text-size-adjust: 100%;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 body {
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background-color: #0f172a;
   color: #f8fafc;
+  overflow-x: hidden;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+/* Prevent auto-zooming on focus in iOS Safari by guaranteeing 16px font size on inputs */
+input, select, textarea {
+  font-size: 16px !important;
+}
+
+/* Tap target utility: guarantees 48px or 44px minimum touch target on mobile devices */
+.tap-target-48 {
+  min-height: 48px;
+  min-width: 48px;
+}
+
+.tap-target-44 {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Breakpoint visibility helpers:
+   Mobile: <= 640px
+   Tablet: 641px - 1024px
+   Desktop: 1025px+
+*/
+@media (max-width: 640px) {
+  .mobile-only {
+    display: block !important;
+  }
+  .tablet-only, .desktop-only, .tablet-and-desktop {
+    display: none !important;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .tablet-only {
+    display: block !important;
+  }
+  .mobile-only, .desktop-only {
+    display: none !important;
+  }
+  .tablet-and-desktop {
+    display: block !important;
+  }
+}
+
+@media (min-width: 1025px) {
+  .desktop-only {
+    display: block !important;
+  }
+  .mobile-only, .tablet-only {
+    display: none !important;
+  }
+  .tablet-and-desktop {
+    display: block !important;
+  }
+}
+
+/* Chart container height: 250px on mobile, 350px on desktop */
+.chart-container {
+  height: 250px;
+  width: 100%;
+  position: relative;
+}
+
+@media (min-width: 1025px) {
+  .chart-container {
+    height: 350px;
+  }
+}
+
+/* Responsive card padding: 16px on mobile, 24px on desktop */
+.card-responsive {
+  padding: 1rem; /* 16px */
+}
+
+@media (min-width: 1025px) {
+  .card-responsive {
+    padding: 1.5rem; /* 24px */
+  }
+}
+
+/* Fullscreen modal styling on mobile (max-width: 640px) */
+@media (max-width: 640px) {
+  .modal-mobile-fullscreen {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    max-height: 100vh !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+  }
 }
 
 @layer utilities {
@@ -23,6 +141,7 @@ body {
   }
 }
 
+/* Print styling */
 @media print {
   body {
     background-color: white !important;

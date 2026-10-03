@@ -46,10 +46,10 @@ export const RedFlagsList: React.FC<RedFlagsListProps> = ({ redFlags }) => {
         </div>
 
         {/* Severity Filter */}
-        <div className="flex items-center space-x-1.5 self-start sm:self-auto bg-slate-950 p-1 rounded-lg border border-slate-800">
+        <div className="flex flex-wrap items-center gap-1.5 self-start sm:self-auto bg-slate-950 p-1.5 rounded-xl border border-slate-800">
           <button
             onClick={() => setFilterSeverity('All')}
-            className={`px-2.5 py-1 rounded text-xs font-semibold transition ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition min-h-[38px] ${
               filterSeverity === 'All' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'
             }`}
           >
@@ -57,7 +57,7 @@ export const RedFlagsList: React.FC<RedFlagsListProps> = ({ redFlags }) => {
           </button>
           <button
             onClick={() => setFilterSeverity('High')}
-            className={`px-2.5 py-1 rounded text-xs font-semibold transition ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition min-h-[38px] ${
               filterSeverity === 'High' ? 'bg-rose-600 text-white' : 'text-slate-400 hover:text-white'
             }`}
           >
@@ -65,7 +65,7 @@ export const RedFlagsList: React.FC<RedFlagsListProps> = ({ redFlags }) => {
           </button>
           <button
             onClick={() => setFilterSeverity('Medium')}
-            className={`px-2.5 py-1 rounded text-xs font-semibold transition ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition min-h-[38px] ${
               filterSeverity === 'Medium' ? 'bg-amber-600 text-white' : 'text-slate-400 hover:text-white'
             }`}
           >
@@ -73,7 +73,7 @@ export const RedFlagsList: React.FC<RedFlagsListProps> = ({ redFlags }) => {
           </button>
           <button
             onClick={() => setFilterSeverity('Low')}
-            className={`px-2.5 py-1 rounded text-xs font-semibold transition ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition min-h-[38px] ${
               filterSeverity === 'Low' ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white'
             }`}
           >
@@ -91,7 +91,7 @@ export const RedFlagsList: React.FC<RedFlagsListProps> = ({ redFlags }) => {
           return (
             <div
               key={idx}
-              className={`p-5 rounded-2xl border transition flex flex-col justify-between ${
+              className={`p-4 sm:p-5 lg:p-6 rounded-2xl border transition flex flex-col justify-between card-responsive ${
                 isHigh
                   ? 'bg-rose-950/20 border-rose-500/40 shadow-lg shadow-rose-950/30'
                   : isMed
@@ -100,8 +100,8 @@ export const RedFlagsList: React.FC<RedFlagsListProps> = ({ redFlags }) => {
               }`}
             >
               <div>
-                {/* Severity Badge & Carrier */}
-                <div className="flex items-center justify-between mb-3">
+                {/* Severity Badge & Carrier (Wrap on small screens if needed) */}
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                   <div className="flex items-center space-x-2">
                     <span
                       className={`text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
@@ -125,17 +125,17 @@ export const RedFlagsList: React.FC<RedFlagsListProps> = ({ redFlags }) => {
                   </div>
                 </div>
 
-                {/* Issue Title */}
-                <h4 className="text-sm sm:text-base font-extrabold text-white tracking-tight leading-snug">
+                {/* Issue Title (18px mobile, 22px desktop) */}
+                <h4 className="text-lg lg:text-[22px] font-extrabold text-white tracking-tight leading-snug">
                   {flag.issue}
                 </h4>
 
-                {/* Plain English Explanation */}
+                {/* Plain English Explanation (14px mobile, 15px desktop) */}
                 <div className="mt-3 p-3.5 rounded-xl bg-slate-900/80 border border-slate-800/80 space-y-1">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
                     Plain English Operational Impact:
                   </span>
-                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  <p className="text-sm lg:text-[15px] text-slate-300 leading-relaxed">
                     {flag.explanation}
                   </p>
                 </div>

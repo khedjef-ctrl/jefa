@@ -143,22 +143,22 @@ export const UploadView: React.FC<UploadViewProps> = ({
   return (
     <div className="space-y-10">
       {/* 1. Landing Hero Section (PolicyLens Branding & Tagline) */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1e3a5f] via-slate-900 to-slate-950 border border-slate-800 p-8 sm:p-12 shadow-2xl">
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1e3a5f] via-slate-900 to-slate-950 border border-slate-800 p-4 sm:p-8 lg:p-12 shadow-2xl">
         <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
 
-        <div className="max-w-3xl space-y-5">
+        <div className="max-w-3xl flex flex-col items-start space-y-4">
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-xs font-bold uppercase tracking-wider">
             <ShieldCheck className="w-3.5 h-3.5" />
             <span>Commercial Insurance Comparative Analysis</span>
           </div>
 
-          {/* Requirement 4: Landing hero headline */}
-          <h1 className="text-3xl sm:text-5xl font-black text-white tracking-tight leading-tight">
+          {/* Requirement 4: Landing hero headline (28px mobile, 42px desktop) */}
+          <h1 className="text-[28px] lg:text-[42px] font-black text-white tracking-tight leading-tight">
             Compare commercial insurance quotes in 60 seconds
           </h1>
 
           {/* Requirement 3: Tagline */}
-          <p className="text-lg sm:text-xl text-emerald-400 font-bold">
+          <p className="text-base sm:text-xl text-emerald-400 font-bold">
             5 carrier quotes. 1 clear comparison. 60 seconds.
           </p>
 
@@ -168,7 +168,7 @@ export const UploadView: React.FC<UploadViewProps> = ({
           </p>
 
           {/* 3 Benefit Bullets */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3">
+          <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
             <div className="p-3.5 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-start space-x-2.5">
               <Clock className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
               <div>
@@ -194,24 +194,25 @@ export const UploadView: React.FC<UploadViewProps> = ({
             </div>
           </div>
 
-          <div className="pt-4 flex flex-wrap items-center gap-3">
+          <div className="w-full pt-3 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            {/* CTA Button: full width on mobile, min-height 52px */}
             <button
               onClick={scrollToUpload}
-              className="px-6 py-3 rounded-xl text-sm font-bold bg-[#10b981] hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/25 transition flex items-center space-x-2 cursor-pointer"
+              className="w-full sm:w-auto min-h-[52px] px-6 py-3.5 rounded-xl text-base sm:text-sm font-extrabold bg-[#10b981] hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/25 transition flex items-center justify-center space-x-2 cursor-pointer"
             >
               <span>Start Free Analysis</span>
               <ArrowRight className="w-4 h-4" />
             </button>
 
             {/* Quick 1-click Preset Selector */}
-            <div className="flex items-center space-x-2 bg-slate-800/80 border border-slate-700 px-3 py-2 rounded-xl text-xs">
-              <span className="text-slate-400">Sample Carrier Quotes:</span>
+            <div className="flex flex-wrap items-center justify-between sm:justify-start gap-2 bg-slate-800/80 border border-slate-700 px-3 py-2 rounded-xl text-xs">
+              <span className="text-slate-400">Sample Quotes:</span>
               <div className="flex space-x-1.5">
                 {PRESET_SCENARIOS.map((p) => (
                   <button
                     key={p.id}
                     onClick={() => onSelectPreset(p.id)}
-                    className={`px-2.5 py-1 rounded font-semibold transition ${
+                    className={`px-2.5 py-1.5 rounded-lg font-semibold transition ${
                       selectedPresetId === p.id
                         ? 'bg-blue-600 text-white'
                         : 'bg-slate-700/60 text-slate-300 hover:text-white'
@@ -228,9 +229,9 @@ export const UploadView: React.FC<UploadViewProps> = ({
 
       {/* 2. Drag & Drop Upload Zone */}
       <div ref={uploadZoneRef} className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h2 className="text-lg font-bold text-white flex items-center space-x-2">
+            <h2 className="text-base sm:text-lg font-bold text-white flex items-center space-x-2">
               <FileUp className="w-5 h-5 text-emerald-400" />
               <span>Upload Carrier Quotes (2 to 5 PDFs)</span>
             </h2>
@@ -238,7 +239,7 @@ export const UploadView: React.FC<UploadViewProps> = ({
               Upload commercial quotes from Travelers, Hartford, Chubb, CNA, Liberty Mutual, etc.
             </p>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 self-start sm:self-auto">
             <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
               {quotes.length} of 5 loaded
             </span>
@@ -254,15 +255,16 @@ export const UploadView: React.FC<UploadViewProps> = ({
             </div>
             <button
               onClick={() => setFileError(null)}
-              className="text-rose-400 hover:text-white font-bold ml-3"
+              className="text-rose-400 hover:text-white font-bold ml-3 tap-target-44 flex items-center justify-center"
             >
               Dismiss
             </button>
           </div>
         )}
 
+        {/* Drag and drop zone: full width, min-height 200px on mobile */}
         <div
-          className={`border-2 border-dashed rounded-2xl p-8 text-center transition ${
+          className={`w-full min-h-[200px] border-2 border-dashed rounded-2xl p-6 sm:p-8 text-center flex flex-col items-center justify-center transition ${
             dragOver
               ? 'border-emerald-500 bg-emerald-500/10'
               : 'border-slate-700 hover:border-slate-600 bg-slate-900/60'
@@ -283,13 +285,13 @@ export const UploadView: React.FC<UploadViewProps> = ({
             }
           }}
         >
-          <div className="max-w-md mx-auto flex flex-col items-center justify-center space-y-3">
+          <div className="w-full max-w-md mx-auto flex flex-col items-center justify-center space-y-4">
             <div className="w-14 h-14 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center shadow-inner">
               <Upload className="w-7 h-7" />
             </div>
 
             <div>
-              <p className="text-sm font-bold text-white">
+              <p className="text-sm sm:text-base font-bold text-white">
                 Drag and drop commercial quote PDFs here
               </p>
               <p className="text-xs text-slate-400 mt-1">
@@ -297,8 +299,9 @@ export const UploadView: React.FC<UploadViewProps> = ({
               </p>
             </div>
 
-            <label className="inline-flex items-center px-4 py-2 rounded-xl text-xs font-bold bg-[#1e3a5f] hover:bg-blue-900 text-white cursor-pointer transition shadow-md border border-blue-700/50">
-              <FileUp className="w-3.5 h-3.5 mr-1.5 text-emerald-400" />
+            {/* "Browse Files" button: full width on mobile, min-height 52px, font-size 18px on mobile */}
+            <label className="w-full sm:w-auto min-h-[52px] inline-flex items-center justify-center px-6 py-3 rounded-xl text-[18px] sm:text-sm font-bold bg-[#1e3a5f] hover:bg-blue-900 text-white cursor-pointer transition shadow-md border border-blue-700/50">
+              <FileUp className="w-5 h-5 mr-2 text-emerald-400" />
               <span>Browse Quote PDFs</span>
               <input
                 type="file"
@@ -311,7 +314,7 @@ export const UploadView: React.FC<UploadViewProps> = ({
           </div>
         </div>
 
-        {/* 3. Uploaded File List with Sizes and Remove Buttons */}
+        {/* 3. Uploaded File List with Sizes and min 44x44px Remove Buttons */}
         {quotes.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center justify-between text-xs text-slate-400">
@@ -321,38 +324,41 @@ export const UploadView: React.FC<UploadViewProps> = ({
               <span>Minimum 2 required</span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {/* Stack vertically on mobile, 2 cols on tablet, 3 cols on desktop */}
+            <div className="flex flex-col sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {quotes.map((q) => (
                 <div
                   key={q.id}
-                  className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition flex items-start justify-between"
+                  className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition flex items-center justify-between gap-2"
                 >
-                  <div className="flex items-start space-x-3 overflow-hidden">
-                    <div className="p-2 rounded-lg bg-blue-950 text-blue-400 shrink-0">
-                      <FileText className="w-4 h-4" />
+                  <div className="flex items-center space-x-3 overflow-hidden flex-1 min-w-0">
+                    <div className="p-2.5 rounded-lg bg-blue-950 text-blue-400 shrink-0">
+                      <FileText className="w-5 h-5" />
                     </div>
-                    <div className="overflow-hidden">
+                    <div className="overflow-hidden flex-1 min-w-0">
                       <input
                         type="text"
                         value={q.carrierName}
                         onChange={(e) => updateCarrierName(q.id, e.target.value)}
                         placeholder="Carrier Name"
-                        className="text-xs font-bold text-white bg-transparent border-b border-transparent hover:border-slate-600 focus:border-emerald-400 focus:outline-none w-full truncate"
+                        className="text-xs sm:text-sm font-bold text-white bg-transparent border-b border-transparent hover:border-slate-600 focus:border-emerald-400 focus:outline-none w-full truncate"
                       />
                       <div className="flex items-center space-x-2 text-[11px] text-slate-400 mt-0.5">
-                        <span className="truncate max-w-[120px]">{q.fileName}</span>
+                        <span className="truncate max-w-[140px]">{q.fileName}</span>
                         <span>•</span>
-                        <span className="font-mono text-emerald-400">{q.fileSize || 'PDF'}</span>
+                        <span className="font-mono text-emerald-400 font-bold">{q.fileSize || 'PDF'}</span>
                       </div>
                     </div>
                   </div>
 
+                  {/* Remove button: min 44x44px tap target */}
                   <button
                     onClick={() => handleRemoveQuote(q.id)}
-                    className="p-1 rounded-md text-slate-500 hover:text-rose-400 hover:bg-slate-800 transition"
+                    className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition cursor-pointer shrink-0"
                     title="Remove quote"
+                    aria-label={`Remove ${q.carrierName}`}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-5 h-5" />
                   </button>
                 </div>
               ))}
@@ -361,7 +367,7 @@ export const UploadView: React.FC<UploadViewProps> = ({
         )}
 
         {/* 4. Optional Client Context Form */}
-        <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+        <div className="p-4 sm:p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-slate-800">
             <div className="flex items-center space-x-2">
               <Building2 className="w-4 h-4 text-emerald-400" />
@@ -510,7 +516,7 @@ export const UploadView: React.FC<UploadViewProps> = ({
           <button
             onClick={onAnalyze}
             disabled={isAnalyzing || quotes.length < 2}
-            className="w-full sm:w-auto px-10 py-4 rounded-2xl text-base font-extrabold bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 shadow-xl shadow-emerald-500/25 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3 cursor-pointer"
+            className="w-full sm:w-auto min-h-[52px] px-10 py-4 rounded-2xl text-base font-extrabold bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 shadow-xl shadow-emerald-500/25 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3 cursor-pointer"
           >
             {isAnalyzing ? (
               <>

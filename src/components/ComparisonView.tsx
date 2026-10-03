@@ -68,6 +68,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
   const [copiedJson, setCopiedJson] = useState(false);
   const [checkedQuestions, setCheckedQuestions] = useState<Record<number, boolean>>({});
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [selectedCarrierTab, setSelectedCarrierTab] = useState<number>(0);
 
   // Identify cheapest carrier
   const cheapestCarrierName = agent_recommendation.cheapest_option;
@@ -79,6 +80,12 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
     setCopiedEmail(true);
     trackEvent('email_copied', { client: clientName });
     setTimeout(() => setCopiedEmail(false), 2000);
+  };
+
+  const handleOpenEmailClient = () => {
+    const subject = encodeURIComponent(client_summary_email.subject);
+    const body = encodeURIComponent(client_summary_email.body);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
   };
 
   const handleCopyQuestions = () => {
@@ -116,7 +123,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-16 sm:pb-8">
       {/* Top Notice if Free Plan Watermark */}
       {isFreePlan && (
         <div className="p-3.5 rounded-2xl bg-slate-900 border border-amber-500/30 text-xs flex flex-col sm:flex-row items-center justify-between gap-3 text-slate-300">
@@ -128,7 +135,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
           </div>
           <button
             onClick={onOpenPricing}
-            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition shrink-0 cursor-pointer"
+            className="w-full sm:w-auto px-4 py-2 min-h-[44px] rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition shrink-0 cursor-pointer flex items-center justify-center"
           >
             Upgrade Plan
           </button>
@@ -136,15 +143,15 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
       )}
 
       {/* Action Bar (Download PDF, Print, Copy JSON) */}
-      <div className="p-4 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+      <div className="p-4 sm:p-5 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
         <div>
           <div className="flex items-center space-x-2">
-            <ShieldCheck className="w-5 h-5 text-emerald-400" />
-            <h2 className="text-base font-extrabold text-white">
+            <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+            <h2 className="text-base sm:text-lg font-extrabold text-white">
               PolicyLens Comparative Proposal
             </h2>
             <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-              {carriers.length} Quotes Analyzed
+              {carriers.length} Quotes
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
@@ -152,16 +159,16 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Download PDF Report Button */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          {/* Download PDF Report Button (full width on mobile, min-height 48px) */}
           <button
             onClick={handleDownloadPdf}
             disabled={isExportingPdf}
-            className="px-4 py-2 rounded-xl text-xs font-bold bg-[#10b981] hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20 transition flex items-center space-x-1.5 cursor-pointer disabled:opacity-50"
+            className="w-full sm:w-auto min-h-[48px] px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#10b981] hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20 transition flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-50"
           >
             {isExportingPdf ? (
               <>
-                <svg className="animate-spin h-3.5 w-3.5 text-slate-950" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin h-4 w-4 text-slate-950" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                 </svg>
@@ -169,38 +176,40 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
               </>
             ) : (
               <>
-                <Download className="w-3.5 h-3.5" />
+                <Download className="w-4 h-4 text-slate-950" />
                 <span>Download PDF Report</span>
               </>
             )}
           </button>
 
-          <button
-            onClick={onPrintPreview}
-            className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center space-x-1.5"
-            title="Open browser print preview"
-          >
-            <Printer className="w-3.5 h-3.5 text-blue-400" />
-            <span>Print View</span>
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={onPrintPreview}
+              className="flex-1 sm:flex-none min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center justify-center space-x-1.5 cursor-pointer tap-target-44"
+              title="Open browser print preview"
+            >
+              <Printer className="w-4 h-4 text-blue-400" />
+              <span>Print View</span>
+            </button>
 
-          <button
-            onClick={handleCopyJson}
-            className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center space-x-1.5"
-            title="Copy raw JSON output"
-          >
-            {copiedJson ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span>JSON Copied</span>
-              </>
-            ) : (
-              <>
-                <Code className="w-3.5 h-3.5 text-slate-400" />
-                <span>Copy JSON</span>
-              </>
-            )}
-          </button>
+            <button
+              onClick={handleCopyJson}
+              className="flex-1 sm:flex-none min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center justify-center space-x-1.5 cursor-pointer tap-target-44"
+              title="Copy raw JSON output"
+            >
+              {copiedJson ? (
+                <>
+                  <Check className="w-4 h-4 text-emerald-400" />
+                  <span>Copied</span>
+                </>
+              ) : (
+                <>
+                  <Code className="w-4 h-4 text-slate-400" />
+                  <span>Copy JSON</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -340,13 +349,13 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
         </div>
       </div>
 
-      {/* 3. SIDE-BY-SIDE COMPARISON TABLE */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
+      {/* 3. SIDE-BY-SIDE COMPARISON TABLE & MOBILE STACKED CARDS */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center space-x-2">
-            <FileSpreadsheet className="w-5 h-5 text-blue-400" />
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-              Side-by-Side Coverage & Limits Table
+            <FileSpreadsheet className="w-5 h-5 text-blue-400 shrink-0" />
+            <h3 className="text-base sm:text-lg lg:text-[22px] font-extrabold text-white">
+              Coverage & Policy Limits Comparison
             </h3>
           </div>
           <span className="text-xs text-slate-400">
@@ -354,7 +363,211 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
           </span>
         </div>
 
-        <div className="overflow-x-auto rounded-2xl border border-slate-800 shadow-2xl bg-slate-900">
+        {/* Mobile Tab Switcher at the top: [Travelers] [Hartford] [CNA] [All] */}
+        <div className="sm:hidden space-y-2">
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+            Select Carrier to Compare:
+          </div>
+          <div className="flex items-center space-x-1.5 overflow-x-auto pb-2 no-scrollbar">
+            {carriers.map((carrier, idx) => (
+              <button
+                key={idx}
+                onClick={() => setSelectedCarrierTab(idx)}
+                className={`min-h-[44px] px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer flex items-center space-x-1.5 ${
+                  selectedCarrierTab === idx
+                    ? 'bg-emerald-500 text-slate-950 font-black shadow-md shadow-emerald-500/20'
+                    : 'bg-slate-800 text-slate-300 hover:text-white border border-slate-700'
+                }`}
+              >
+                <span>{carrier.carrier_name.split(' ')[0]}</span>
+                {carrier.carrier_name === cheapestCarrierName && (
+                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                )}
+              </button>
+            ))}
+            <button
+              onClick={() => setSelectedCarrierTab(-1)}
+              className={`min-h-[44px] px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+                selectedCarrierTab === -1
+                  ? 'bg-emerald-500 text-slate-950 font-black shadow-md shadow-emerald-500/20'
+                  : 'bg-slate-800 text-slate-300 hover:text-white border border-slate-700'
+              }`}
+            >
+              All Quotes
+            </button>
+          </div>
+        </div>
+
+        {/* MOBILE VIEW (max-width: 640px): Stacked Cards */}
+        <div className="sm:hidden space-y-4">
+          {(selectedCarrierTab === -1 ? carriers : [carriers[selectedCarrierTab] || carriers[0]]).map((carrier, cIdx) => {
+            const isCheapest = carrier.carrier_name === cheapestCarrierName;
+            return (
+              <div
+                key={cIdx}
+                className={`rounded-2xl border p-4 space-y-4 transition ${
+                  isCheapest
+                    ? 'bg-emerald-950/20 border-emerald-500/60 shadow-xl'
+                    : 'bg-slate-900 border-slate-800 shadow-lg'
+                }`}
+              >
+                {/* Header card with name, premium, effective date */}
+                <div className="pb-3 border-b border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-base font-black text-white">
+                      {carrier.carrier_name}
+                    </h4>
+                    {isCheapest && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-500 text-slate-950">
+                        Cheapest
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-xs text-slate-400">Annual Premium:</span>
+                    <span className={`text-2xl font-black ${isCheapest ? 'text-emerald-400' : 'text-white'}`}>
+                      ${carrier.annual_premium?.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex flex-col text-[11px] text-slate-400 space-y-0.5 pt-1">
+                    <div className="flex justify-between">
+                      <span>Effective Term:</span>
+                      <span className="text-slate-200 font-medium">{carrier.effective_date} - {carrier.expiration_date}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Policy Number:</span>
+                      <span className="text-slate-300 font-mono">{carrier.policy_number}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Payment Plan:</span>
+                      <span className="text-slate-300">{carrier.payment_terms || 'Annual pay'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Coverage lines inside card as rows: label + value */}
+                <div className="space-y-3 divide-y divide-slate-800/80">
+                  {comparison_table.map((row, rIdx) => {
+                    const val = row.values.find(
+                      (v) => v.carrier_name.toLowerCase() === carrier.carrier_name.toLowerCase()
+                    );
+                    const deductibleNum = parseInt(val?.deductible?.replace(/[^0-9]/g, '') || '0', 10);
+                    const isHighDeductible = deductibleNum > 5000;
+                    const isMissing = !val || val.limit.toLowerCase().includes('not stated') || val.limit.toLowerCase().includes('excluded');
+
+                    return (
+                      <div key={rIdx} className="pt-2.5 space-y-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="text-xs font-bold text-slate-200">
+                            {row.coverage_line}
+                          </span>
+                          <span className={`text-xs font-black text-right ${isMissing ? 'text-amber-400 italic' : 'text-emerald-400'}`}>
+                            {val?.limit || 'Not stated'}
+                          </span>
+                        </div>
+
+                        {val?.deductible && val.deductible !== 'N/A' && (
+                          <div className="flex items-center justify-between text-[11px] text-slate-400">
+                            <span>Deductible:</span>
+                            <span className={`font-mono px-1.5 py-0.5 rounded text-[11px] ${
+                              isHighDeductible
+                                ? 'bg-rose-500/20 text-rose-300 font-bold border border-rose-500/30'
+                                : 'bg-slate-800 text-slate-300'
+                            }`}>
+                              {val.deductible} {isHighDeductible && '⚠️ (> $5k)'}
+                            </span>
+                          </div>
+                        )}
+
+                        {val?.notes && (
+                          <p className="text-[11px] text-slate-400 leading-snug bg-slate-950/60 p-2 rounded-lg border border-slate-800/60">
+                            {val.notes}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* TABLET VIEW (641px - 1024px): 2 columns side by side */}
+        <div className="hidden sm:grid lg:hidden sm:grid-cols-2 gap-4">
+          {carriers.map((carrier, cIdx) => {
+            const isCheapest = carrier.carrier_name === cheapestCarrierName;
+            return (
+              <div
+                key={cIdx}
+                className={`rounded-2xl border p-4 sm:p-5 space-y-4 transition ${
+                  isCheapest
+                    ? 'bg-emerald-950/20 border-emerald-500/60 shadow-xl'
+                    : 'bg-slate-900 border-slate-800 shadow-lg'
+                }`}
+              >
+                {/* Header card with name, premium, effective date */}
+                <div className="pb-3 border-b border-slate-800 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm sm:text-base font-black text-white truncate max-w-[180px]">
+                      {carrier.carrier_name}
+                    </h4>
+                    {isCheapest && (
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-500 text-slate-950">
+                        Cheapest
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-xs text-slate-400">Annual Premium:</span>
+                    <span className={`text-xl font-black ${isCheapest ? 'text-emerald-400' : 'text-white'}`}>
+                      ${carrier.annual_premium?.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-400 truncate">
+                    Term: {carrier.effective_date} - {carrier.expiration_date}
+                  </div>
+                </div>
+
+                {/* Coverage lines inside card as rows: label + value */}
+                <div className="space-y-2.5 divide-y divide-slate-800/80">
+                  {comparison_table.map((row, rIdx) => {
+                    const val = row.values.find(
+                      (v) => v.carrier_name.toLowerCase() === carrier.carrier_name.toLowerCase()
+                    );
+                    const deductibleNum = parseInt(val?.deductible?.replace(/[^0-9]/g, '') || '0', 10);
+                    const isHighDeductible = deductibleNum > 5000;
+                    const isMissing = !val || val.limit.toLowerCase().includes('not stated') || val.limit.toLowerCase().includes('excluded');
+
+                    return (
+                      <div key={rIdx} className="pt-2 space-y-0.5">
+                        <div className="flex items-start justify-between gap-1 text-xs">
+                          <span className="font-semibold text-slate-200 truncate max-w-[140px]">
+                            {row.coverage_line}
+                          </span>
+                          <span className={`font-bold text-right truncate max-w-[130px] ${isMissing ? 'text-amber-400 italic' : 'text-white'}`}>
+                            {val?.limit || 'Not stated'}
+                          </span>
+                        </div>
+                        {val?.deductible && val.deductible !== 'N/A' && (
+                          <div className="flex items-center justify-between text-[11px] text-slate-400">
+                            <span>Ded:</span>
+                            <span className={isHighDeductible ? 'text-rose-400 font-bold' : 'text-slate-300'}>
+                              {val.deductible} {isHighDeductible && '⚠️'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* DESKTOP VIEW (1025px+): Full Side-by-Side Table */}
+        <div className="hidden lg:block overflow-x-auto rounded-2xl border border-slate-800 shadow-2xl bg-slate-900">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="bg-slate-800/90 border-b border-slate-700 text-slate-300">
@@ -423,11 +636,11 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
 
       {/* 4. RED FLAGS & DANGEROUS EXCLUSIONS (Low=gray, Medium=orange, High=red) */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
           <div className="flex items-center space-x-2">
-            <ShieldAlert className="w-5 h-5 text-rose-400" />
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-              Critical Red Flags & Dangerous Exclusions (Rule 3 & 7)
+            <ShieldAlert className="w-5 h-5 text-rose-400 shrink-0" />
+            <h3 className="text-base sm:text-lg lg:text-[22px] font-extrabold text-white">
+              Critical Red Flags & Dangerous Exclusions
             </h3>
           </div>
           <span className="text-xs text-slate-400">
@@ -435,6 +648,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
           </span>
         </div>
 
+        {/* Stack vertically on mobile, 2 cols on tablet & desktop */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {red_flags.map((flag, idx) => {
             const isHigh = flag.severity === 'High';
@@ -443,7 +657,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
             return (
               <div
                 key={idx}
-                className={`p-5 rounded-2xl border transition flex flex-col justify-between ${
+                className={`p-4 sm:p-5 lg:p-6 rounded-2xl border transition flex flex-col justify-between card-responsive ${
                   isHigh
                     ? 'bg-rose-950/20 border-rose-500/40 shadow-lg shadow-rose-950/30'
                     : isMed
@@ -452,7 +666,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
                 }`}
               >
                 <div>
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                     <span
                       className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${
                         isHigh
@@ -469,11 +683,11 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
                     </span>
                   </div>
 
-                  <h4 className="text-sm font-extrabold text-white">
+                  <h4 className="text-base sm:text-lg lg:text-[22px] font-extrabold text-white">
                     {flag.carrier_name}: {flag.issue}
                   </h4>
 
-                  <p className="text-xs text-slate-300 mt-2 leading-relaxed bg-slate-950/60 p-3 rounded-xl border border-slate-800/80">
+                  <p className="text-sm sm:text-sm lg:text-[15px] text-slate-300 mt-2 leading-relaxed bg-slate-950/60 p-3.5 rounded-xl border border-slate-800/80">
                     {flag.explanation}
                   </p>
                 </div>
@@ -486,9 +700,9 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
       {/* 5. MISSING COVERAGES SECTION WITH RISK-LEVEL ICONS */}
       <div className="space-y-3">
         <div className="flex items-center space-x-2">
-          <AlertTriangle className="w-5 h-5 text-amber-400" />
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-            Coverage Gaps & Discrepancies Between Quotes (Rule 6)
+          <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
+          <h3 className="text-base sm:text-lg lg:text-[22px] font-extrabold text-white">
+            Coverage Gaps & Discrepancies Between Quotes
           </h3>
         </div>
 
@@ -498,10 +712,10 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
             return (
               <div
                 key={idx}
-                className="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3"
+                className="p-4 sm:p-5 lg:p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 card-responsive"
               >
-                <div className="flex items-center justify-between">
-                  <h4 className="text-base font-extrabold text-white">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-base sm:text-lg lg:text-[22px] font-extrabold text-white">
                     {gap.coverage}
                   </h4>
                   <div className="flex items-center space-x-1.5">
@@ -524,7 +738,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                   <div className="p-2.5 rounded-lg bg-emerald-950/30 border border-emerald-500/30 text-emerald-300">
                     <strong className="block text-[10px] uppercase font-bold text-emerald-400">Included in:</strong>
                     <span>{gap.present_in.join(', ')}</span>
@@ -535,8 +749,8 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
                   </div>
                 </div>
 
-                <p className="text-xs text-slate-400 italic">
-                  <strong>Recommendation:</strong> {gap.recommendation}
+                <p className="text-sm sm:text-sm lg:text-[15px] text-slate-300 italic">
+                  <strong className="text-slate-200">Recommendation:</strong> {gap.recommendation}
                 </p>
               </div>
             );
@@ -545,17 +759,17 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
       </div>
 
       {/* 6. PREMIUM ANALYSIS WITH SIMPLE BAR CHART (CHART.JS VIA CDN) */}
-      <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
+      <div className="p-4 sm:p-6 lg:p-8 rounded-3xl bg-slate-900 border border-slate-800 space-y-4 card-responsive">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+            <h3 className="text-base sm:text-lg lg:text-[22px] font-extrabold text-white">
               Premium Spread & Market Benchmark Analysis
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs sm:text-sm text-slate-400">
               Average Premium: <strong className="text-white">${premium_analysis.average_premium?.toLocaleString()}</strong> | Spread: <strong className="text-emerald-400">{premium_analysis.percentage_difference?.toFixed(1)}%</strong>
             </p>
           </div>
-          <span className="text-xs text-slate-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
+          <span className="text-xs text-slate-400 bg-slate-800 px-3 py-1 rounded-full border border-slate-700 self-start sm:self-auto">
             Chart.js Active
           </span>
         </div>
@@ -568,36 +782,36 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
         />
 
         {/* Pricing Commentary */}
-        <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 text-xs text-slate-300">
-          <strong className="text-slate-200 block mb-1 uppercase tracking-wider text-[10px]">
+        <div className="p-4 rounded-2xl bg-slate-950/70 border border-slate-800 text-xs sm:text-sm text-slate-300">
+          <strong className="text-slate-200 block mb-1 uppercase tracking-wider text-[11px]">
             Pricing Analysis Commentary:
           </strong>
-          <p>{premium_analysis.commentary}</p>
+          <p className="leading-relaxed">{premium_analysis.commentary}</p>
         </div>
       </div>
 
       {/* 7. QUESTIONS FOR UNDERWRITER AS A CHECKLIST */}
-      <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
+      <div className="p-4 sm:p-6 lg:p-8 rounded-3xl bg-slate-900 border border-slate-800 space-y-4 card-responsive">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800">
           <div className="flex items-center space-x-2">
-            <HelpCircle className="w-5 h-5 text-indigo-400" />
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+            <HelpCircle className="w-5 h-5 text-indigo-400 shrink-0" />
+            <h3 className="text-base sm:text-lg lg:text-[22px] font-extrabold text-white">
               Underwriter Inquiries & Clarification Checklist
             </h3>
           </div>
 
           <button
             onClick={handleCopyQuestions}
-            className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center space-x-1.5 self-start sm:self-auto cursor-pointer"
+            className="w-full sm:w-auto min-h-[44px] px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center justify-center space-x-1.5 cursor-pointer tap-target-44"
           >
             {copiedQuestions ? (
               <>
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                <Check className="w-4 h-4 text-emerald-400" />
                 <span>Copied Checklist</span>
               </>
             ) : (
               <>
-                <Copy className="w-3.5 h-3.5 text-blue-400" />
+                <Copy className="w-4 h-4 text-blue-400" />
                 <span>Copy Questions</span>
               </>
             )}
@@ -609,7 +823,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
             <div
               key={idx}
               onClick={() => toggleQuestionCheck(idx)}
-              className={`p-4 rounded-xl border text-xs cursor-pointer transition flex items-start space-x-3 ${
+              className={`p-4 rounded-xl border text-xs sm:text-sm cursor-pointer transition flex items-start space-x-3 ${
                 checkedQuestions[idx]
                   ? 'bg-emerald-950/20 border-emerald-500/40 text-slate-400 line-through'
                   : 'bg-slate-950/80 border-slate-800 text-slate-200 hover:border-slate-700'
@@ -619,12 +833,12 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
                 type="checkbox"
                 checked={!!checkedQuestions[idx]}
                 onChange={() => {}}
-                className="mt-0.5 rounded text-emerald-500 focus:ring-0 cursor-pointer"
+                className="mt-1 rounded text-emerald-500 focus:ring-0 cursor-pointer min-h-[20px] min-w-[20px]"
               />
               <div className="space-y-1">
                 <span className="font-bold text-white">{q.carrier_name}: </span>
                 <span className="text-slate-300 font-medium">"{q.question}"</span>
-                <p className="text-[11px] text-slate-400">Reason: {q.reason}</p>
+                <p className="text-xs text-slate-400">Reason: {q.reason}</p>
               </div>
             </div>
           ))}
@@ -632,34 +846,46 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
       </div>
 
       {/* 8. CLIENT SUMMARY EMAIL IN A COPY-TO-CLIPBOARD BOX */}
-      <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-800">
+      <div className="p-4 sm:p-6 lg:p-8 rounded-3xl bg-slate-900 border border-slate-800 space-y-4 card-responsive">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
           <div className="flex items-center space-x-2">
-            <Mail className="w-5 h-5 text-emerald-400" />
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+            <Mail className="w-5 h-5 text-emerald-400 shrink-0" />
+            <h3 className="text-base sm:text-lg lg:text-[22px] font-extrabold text-white">
               Client Summary Email (Ready to Send)
             </h3>
           </div>
 
-          <button
-            onClick={handleCopyEmail}
-            className="px-4 py-2 rounded-xl text-xs font-bold bg-[#10b981] hover:bg-emerald-400 text-slate-950 shadow-md shadow-emerald-500/20 transition flex items-center space-x-1.5 cursor-pointer self-start sm:self-auto"
-          >
-            {copiedEmail ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-slate-950" />
-                <span>Copied to Clipboard!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-3.5 h-3.5 text-slate-950" />
-                <span>Copy Email to Clipboard</span>
-              </>
-            )}
-          </button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            {/* Email client button: full width on mobile */}
+            <button
+              onClick={handleOpenEmailClient}
+              className="w-full sm:w-auto min-h-[48px] px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#1e3a5f] hover:bg-blue-900 text-white border border-blue-700/60 shadow-md transition flex items-center justify-center space-x-2 cursor-pointer"
+            >
+              <Mail className="w-4 h-4 text-emerald-400" />
+              <span>Open in Email Client</span>
+            </button>
+
+            {/* Copy button: full width on mobile, min 44x44px tap target */}
+            <button
+              onClick={handleCopyEmail}
+              className="w-full sm:w-auto min-h-[48px] px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#10b981] hover:bg-emerald-400 text-slate-950 shadow-md shadow-emerald-500/20 transition flex items-center justify-center space-x-2 cursor-pointer tap-target-44"
+            >
+              {copiedEmail ? (
+                <>
+                  <Check className="w-4 h-4 text-slate-950" />
+                  <span>Copied to Clipboard!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4 text-slate-950" />
+                  <span>Copy to Clipboard</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
-        <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 text-xs">
+        <div className="p-4 sm:p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 text-xs sm:text-sm">
           <div className="pb-2 border-b border-slate-800 font-mono text-slate-300">
             <strong>Subject:</strong> {client_summary_email.subject}
           </div>
@@ -676,15 +902,15 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
 
       {/* 9. RAW JSON (TOGGLED BY SETTINGS) */}
       {showRawJson && (
-        <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-3">
+        <div className="p-4 sm:p-6 rounded-3xl bg-slate-900 border border-slate-800 space-y-3 card-responsive">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-white uppercase tracking-wider flex items-center space-x-2">
+            <h3 className="text-base font-bold text-white uppercase tracking-wider flex items-center space-x-2">
               <Code className="w-4 h-4 text-emerald-400" />
               <span>Raw JSON Output (Rule 10 Verified)</span>
             </h3>
             <button
               onClick={handleCopyJson}
-              className="text-xs text-blue-400 hover:text-blue-300 font-semibold cursor-pointer"
+              className="min-h-[44px] px-3 py-1.5 rounded-lg text-xs text-blue-400 hover:text-blue-300 font-semibold cursor-pointer tap-target-44 flex items-center justify-center"
             >
               {copiedJson ? 'Copied' : 'Copy JSON'}
             </button>
@@ -694,6 +920,22 @@ export const ComparisonView: React.FC<ComparisonViewProps> = ({
           </pre>
         </div>
       )}
+
+      {/* Mobile Fixed Bottom Action Bar for Download PDF (Always Visible on Mobile) */}
+      <div className="sm:hidden fixed bottom-11 inset-x-0 z-30 p-2.5 bg-[#1e3a5f]/95 backdrop-blur-md border-t border-slate-700/80 shadow-2xl flex items-center justify-between gap-2 px-4">
+        <div className="flex flex-col min-w-0 pr-2">
+          <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">Client Proposal</span>
+          <span className="text-xs font-bold text-white truncate">{clientName || 'Commercial Quotes'}</span>
+        </div>
+        <button
+          onClick={handleDownloadPdf}
+          disabled={isExportingPdf}
+          className="min-h-[44px] px-4 py-2 rounded-xl text-xs font-bold bg-[#10b981] hover:bg-emerald-400 text-slate-950 shadow-md shadow-emerald-500/25 transition flex items-center justify-center space-x-1.5 cursor-pointer disabled:opacity-50 shrink-0"
+        >
+          <Download className="w-4 h-4 text-slate-950" />
+          <span>{isExportingPdf ? 'Exporting...' : 'Download PDF'}</span>
+        </button>
+      </div>
     </div>
   );
 };

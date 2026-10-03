@@ -112,7 +112,7 @@ export const PremiumChart: React.FC<PremiumChartProps> = ({
               color: '#94a3b8',
               callback: (value: any) => `$${value.toLocaleString()}`,
               font: {
-                size: 10,
+                size: 11,
                 family: 'Inter',
               },
             },
@@ -130,7 +130,7 @@ export const PremiumChart: React.FC<PremiumChartProps> = ({
   }, [carriers, premiumAnalysis, cheapestCarrierName]);
 
   return (
-    <div className="w-full h-64 sm:h-72">
+    <div className="chart-container w-full h-[250px] lg:h-[350px] relative">
       <canvas ref={canvasRef} />
     </div>
   );
